@@ -40,7 +40,7 @@ fun MainNavigation(data: Uri?) {
             Navigation(screen, Modifier.fillMaxSize()) { currentScreen ->
                 if (currentScreen == "facebook") {
                     FacebookWebView(
-                        data?.toString() ?: "https://facebook.com/",
+                        data?.toString() ?: "https://instagram.com/",
                         viewModel = viewModel,
                         onRestart = {
                             shouldRestart.value = !shouldRestart.value
