@@ -18,7 +18,7 @@ class ExternalRequestInterceptor(
     ): WebRequestInterceptResult {
 
         val internalLinkRegex =
-            Regex("https?://(?!(l|lm)\\.facebook\\.com)([^/]+\\.)?(facebook\\.com|messenger\\.com)/.*")
+            Regex("https?://(?!(l|lm)\\.instagram\\.com)([^/]+\\.)?(instagram\\.com|messenger\\.com)/.*")
 
         return if (internalLinkRegex.containsMatchIn(request.url) && request.isForMainFrame) {
             WebRequestInterceptResult.Allow
