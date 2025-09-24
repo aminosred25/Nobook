@@ -9,7 +9,8 @@ import com.multiplatform.webview.web.WebViewNavigator
 
 class ExternalRequestInterceptor(
     private val context: Context,
-    private val toggleMessenger: () -> Unit
+    private val onOpenMessenger: () -> Boolean,
+    private val onNavigateFB: () -> Boolean
 ) : RequestInterceptor {
 
     override fun onInterceptUrlRequest(
@@ -17,28 +18,34 @@ class ExternalRequestInterceptor(
         navigator: WebViewNavigator
     ): WebRequestInterceptResult {
 
-        val internalLinkRegex =
-            Regex("https?://(?!(l|lm)\\.facebook\\.com)([^/]+\\.)?(facebook\\.com|messenger\\.com)/.*")
+        val url = fbRedirectSanitizer(request.url)
+        val metaLinksRegex = Regex("https?://([^/]+\\.)?(facebook\\.com|instagram\\.com|threads\\.com)(|/.*|\\?.*)")
+        val messengerRegex = Regex("(https?://([^/]+\\.)?(facebook\\.com/messages|messenger\\.com)|.*://threads)(|/.*|\\?.*)")
 
-        return if (internalLinkRegex.containsMatchIn(request.url) && request.isForMainFrame) {
-            WebRequestInterceptResult.Allow
+        return if (messengerRegex.matches(url)) {
+            if (onOpenMessenger()) {
+                openInBrowser(url)
+                WebRequestInterceptResult.Reject
+            } else {
+                WebRequestInterceptResult.Allow
+            }
+        } else if (metaLinksRegex.matches(url)) {
+            if (onNavigateFB()) {
+                openInBrowser(url)
+                WebRequestInterceptResult.Reject
+            } else {
+                WebRequestInterceptResult.Allow
+            }
         } else {
-            openInBrowser(request.url)
+            openInBrowser(url)
             WebRequestInterceptResult.Reject
         }
     }
 
     private fun openInBrowser(url: String) {
-
-        val cleanUrl = fbRedirectSanitizer(url)
-
         try {
-            val intent = Intent.parseUri(cleanUrl, Intent.URI_INTENT_SCHEME)
+            val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
             context.startActivity(intent)
-        } catch (_: Exception) {
-            // if fails to open in messenger app
-            if (url.contains("fb-messenger://threads"))
-                toggleMessenger()
-        }
+        } catch (_: Exception) {}
     }
 }

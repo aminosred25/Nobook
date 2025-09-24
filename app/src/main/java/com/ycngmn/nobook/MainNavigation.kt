@@ -1,7 +1,6 @@
 package com.ycngmn.nobook
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +14,6 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ycngmn.nobook.ui.NobookViewModel
@@ -26,7 +24,6 @@ import com.ycngmn.nobook.ui.theme.NobookTheme
 @Composable
 fun MainNavigation(data: Uri?) {
 
-    val context = LocalContext.current
     val viewModel: NobookViewModel = viewModel()
     val shouldRestart = remember { mutableStateOf(false) }
     val themeColor = viewModel.themeColor.value
@@ -40,22 +37,18 @@ fun MainNavigation(data: Uri?) {
             Navigation(screen, Modifier.fillMaxSize()) { currentScreen ->
                 if (currentScreen == "facebook") {
                     FacebookWebView(
-                        data?.toString() ?: "https://facebook.com/",
+                        data?.toString() ?: "https://facebook.com/bookmarks/",
                         viewModel = viewModel,
                         onRestart = {
                             shouldRestart.value = !shouldRestart.value
                             viewModel.scripts.value = ""
                         },
-                        onOpenMessenger = {
-                            Toast.makeText(context, "Opening messages...", Toast.LENGTH_SHORT)
-                                .show()
-                            screen = "messages"
-                        }
+                        onOpenMessenger = { screen = "messages"; true }
                     )
                 } else {
                     MessengerWebView(
                         viewModel = viewModel,
-                        onNavigateFB = { screen = "facebook" }
+                        onNavigateFB = { screen = "facebook"; true }
                     )
                 }
             }

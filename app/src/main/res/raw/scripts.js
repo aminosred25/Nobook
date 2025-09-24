@@ -350,18 +350,78 @@ observer.observe(document.body, { childList: true, subtree: true });
     }
 })();
 
-// File Download Script
+// Update Facebook bookmarks
 (function() {
-    if (window._downloadBridgeInitialized) return;
-    window._downloadBridgeInitialized = true;
-    const originalCreateObjectURL = URL.createObjectURL;
-    URL.createObjectURL = function(blob) {
-        const reader = new FileReader();
-        reader.onloadend = function() {
-            if (reader.result)
-                DownloadBridge.downloadBase64File(reader.result, blob.type);
-        };
-        reader.readAsDataURL(blob);
-        return originalCreateObjectURL(blob);
-    };
+  const ordered = ['Feeds','Instagram','Messages','Video','Threads','Marketplace'];
+  const regex = new RegExp(ordered.join('|'), 'i');
+  var newItems = {
+    "Instagram" : {
+      pos: 1,
+      ico: "󰟷",
+      url: "https://instagram.com/explore",
+      img: "https://static.cdninstagram.com/rsrc.php/v4/yI/r/VsNE-OHk_8a.png"
+    },
+    "Threads" : {
+      pos: 4,
+      ico: "󰐅",
+      url: "https://threads.com",
+      img: "https://static.cdninstagram.com/rsrc.php/ye/r/lEu8iVizmNW.ico"
+    }
+  };
+  const customiseShortcuts = () => {
+    if (window.location.href.includes('facebook.com/bookmarks')) {
+      const list = document.querySelector('div[role="list"]');
+      if (list?.children.length > 0 && !list.hasAttribute('ordered')) {
+        const itemsToRemove = Array.from(list.children).filter(item => { return !regex.test(item.querySelector('span').textContent); });
+        itemsToRemove.forEach(item => { list.removeChild(item); });
+        list.style.height = 'auto';
+        var isEven = true;
+        for (const id of ordered) {
+          var node = null;
+          for (const item of list.children) {
+            if (item.querySelector('span').textContent == id)
+            {
+              node = item;
+              break;
+            }
+          }
+          if (node == null && id in newItems) {
+            node = list.children[0].cloneNode(true);
+            node.querySelector('img').src = newItems[id].img;
+            node.querySelector('span').childNodes[0].nodeValue = id;
+            node.querySelector('div[role="button"]').setAttribute('data-action-id', 0);
+            node.addEventListener('click', function() { window.location.href = newItems[id].url; });
+          }
+          if (node != null) {
+            isEven = !isEven;
+            list.appendChild(node);
+            node.style.setProperty('margin-top', -80 * isEven + 'px');
+            node.style.setProperty('margin-left', 12 + 192 * isEven + 'px');
+          }
+        }
+        list.setAttribute('ordered', '');
+      }
+    }
+    else {
+      const tabbar = document.querySelector('div[role="tablist"][data-tti-phase="-1"][data-type="container"][data-mcomponent="MContainer"].m');
+      if (tabbar?.children.length > 0) {
+        for (const config of Object.values(newItems)) {
+          tabbar.children[config.pos].querySelector('span[class="f3"]').childNodes[0].nodeValue = config.ico
+          tabbar.children[config.pos].addEventListener('click', function() { window.location.href = config.url; });
+          tabbar.children[config.pos].setAttribute('data-action-id', tabbar.children[0].getAttribute('data-action-id'));
+        }
+      }
+    }
+  };
+
+  customiseShortcuts();
+
+  const obs = new MutationObserver(() => {
+    customiseShortcuts();
+  });
+
+  obs.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 })();

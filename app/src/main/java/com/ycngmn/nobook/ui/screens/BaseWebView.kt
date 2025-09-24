@@ -43,8 +43,9 @@ import rememberImeHeight
 @Composable
 fun BaseWebView(
     url: String,
-    userAgent: String? = null,
-    onInterceptAction: (() -> Unit) = {},
+    userAgent: String?,
+    onOpenMessenger: () -> Boolean,
+    onNavigateFB: () -> Boolean,
     onPostLoad: () -> Unit = {},
     onRestart: () -> Unit = {},
     viewModel: NobookViewModel,
@@ -55,7 +56,7 @@ fun BaseWebView(
     val state =
         rememberWebViewState(url, additionalHttpHeaders = mapOf("X-Requested-With" to ""))
     val navigator = rememberWebViewNavigator(requestInterceptor =
-        ExternalRequestInterceptor(context = context, onInterceptAction))
+        ExternalRequestInterceptor(context, onOpenMessenger, onNavigateFB))
 
 
 
@@ -74,9 +75,7 @@ fun BaseWebView(
             val backHandled = it.removeSurrounding("\"")
             if (backHandled == "false") {
                 if (navigator.canGoBack) navigator.navigateBack()
-                else if (state.lastLoadedUrl?.contains(".facebook.com/messages/") == true)
-                    onInterceptAction()
-                else activity?.finish()
+                else if (!onNavigateFB()) activity?.finish()
             }
             else if (backHandled == "exit") activity?.finish()
             else exit.value = true
@@ -86,7 +85,7 @@ fun BaseWebView(
 
     // Navigate to Nobook on fb logo pressed from messenger.
     val navTrigger = remember { mutableStateOf(false) }
-    if (navTrigger.value) onInterceptAction()
+    if (navTrigger.value) onNavigateFB()
 
     val isLoading = remember { mutableStateOf(true) }
     val isError = state.errorsForCurrentRequest.lastOrNull()?.isFromMainFrame == true
@@ -132,8 +131,6 @@ fun BaseWebView(
     }
 
     if (settingsToggle.value) NobookSheet(viewModel, settingsToggle, onRestart)
-    // A possible overkill to fix https://github.com/ycngmn/Nobook/issues/5
-    if (state.lastLoadedUrl?.contains(".com/messages/blocked") == true) onInterceptAction()
 
     if (isLoading.value) SplashLoading(state.loadingState)
 

@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 fun FacebookWebView(
     url: String,
     onRestart: () -> Unit,
-    onOpenMessenger: () -> Unit,
+    onOpenMessenger: () -> Boolean,
     viewModel: NobookViewModel
 ) {
 
@@ -42,25 +42,24 @@ fun FacebookWebView(
     BaseWebView(
         url = url,
         userAgent = if (isDesktop.value) DESKTOP_USER_AGENT else null,
-        onInterceptAction = onOpenMessenger,
+        onOpenMessenger = onOpenMessenger,
+        onNavigateFB = { false },
         onRestart = onRestart,
         viewModel = viewModel,
         onPostLoad = {
-            val cdnBase = "https://raw.githubusercontent.com/ycngmn/Nobook/refs/heads/main/app/src/main/res/raw"
-
             val scripts = listOf(
-                Script(true, R.raw.scripts, "$cdnBase/scripts.js"), // always apply
-                Script(viewModel.removeAds.value, R.raw.adblock, "$cdnBase/adblock.js"),
-                Script(viewModel.enableDownloadContent.value, R.raw.download_content, "$cdnBase/download_content.js"),
-                Script(viewModel.stickyNavbar.value, R.raw.sticky_navbar, "$cdnBase/sticky_navbar.js"),
-                Script(!viewModel.pinchToZoom.value, R.raw.pinch_to_zoom, "$cdnBase/pinch_to_zoom.js"),
-                Script(viewModel.amoledBlack.value, R.raw.amoled_black, "$cdnBase/amoled_black.js"),
-                Script(viewModel.hideSuggested.value, R.raw.hide_suggested, "$cdnBase/hide_suggested.js"),
-                Script(viewModel.hideReels.value, R.raw.hide_reels, "$cdnBase/hide_reels.js"),
-                Script(viewModel.hideStories.value, R.raw.hide_stories, "$cdnBase/hide_stories.js"),
-                Script(viewModel.hidePeopleYouMayKnow.value, R.raw.hide_pymk, "$cdnBase/hide_pymk.js"),
-                Script(viewModel.hideGroups.value, R.raw.hide_groups, "$cdnBase/hide_groups.js"),
-                Script(!viewModel.desktopLayout.value, R.raw.messenger_scripts, "$cdnBase/messenger_scripts.js")
+                Script(true, R.raw.scripts), // always apply
+                Script(viewModel.removeAds.value, R.raw.adblock),
+                Script(viewModel.enableDownloadContent.value, R.raw.download_content),
+                Script(viewModel.stickyNavbar.value, R.raw.sticky_navbar),
+                Script(viewModel.pinchToZoom.value, R.raw.enable_pinch_to_zoom),
+                Script(!viewModel.pinchToZoom.value, R.raw.disable_pinch_to_zoom),
+                Script(viewModel.amoledBlack.value, R.raw.amoled_black),
+                Script(viewModel.hideSuggested.value, R.raw.hide_suggested),
+                Script(viewModel.hideReels.value, R.raw.hide_reels),
+                Script(viewModel.hideStories.value, R.raw.hide_stories),
+                Script(viewModel.hidePeopleYouMayKnow.value, R.raw.hide_pymk),
+                Script(viewModel.hideGroups.value, R.raw.hide_groups)
             )
 
             scope.launch {
